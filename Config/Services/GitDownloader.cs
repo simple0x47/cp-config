@@ -14,20 +14,18 @@ public class GitDownloader : IDownloader
     private readonly IList<string> _downloadedPaths;
     private readonly Signature _merger;
     private readonly PullOptions _pullOptions;
-    private readonly ISecretsManager _secretsManager;
 
     public GitDownloader(IConfiguration config, ISecretsManager secretsManager)
     {
         _config = config;
-        _secretsManager = secretsManager;
 
         _downloadedPaths = new List<string>();
 
         CredentialsHandler handler = (_, _, _) => new SecureUsernamePasswordCredentials
         {
-            Username = _secretsManager.Get(_config["GitDownloader:UsernameSecret"]),
+            Username = secretsManager.Get(_config["GitDownloader:UsernameSecret"]),
             Password = SecretStringProvider.GetSecureStringFromString(
-                _secretsManager.Get(_config["GitDownloader:PasswordSecret"]))
+                secretsManager.Get(_config["GitDownloader:PasswordSecret"]))
         };
 
         _cloneOptions = new CloneOptions
