@@ -7,10 +7,12 @@ namespace Cuplan.Config.IntegrationTests.Services;
 public class GitDownloaderTest : TestBase, IDisposable
 {
     private readonly IDownloader _downloader;
+    private readonly string _downloadPath;
 
     public GitDownloaderTest()
     {
         _downloader = new GitDownloader(Config, SecretsManager);
+        _downloadPath = $"{Directory.GetCurrentDirectory()}/{Guid.NewGuid().ToString()}";
     }
 
     public void Dispose()
@@ -21,33 +23,25 @@ public class GitDownloaderTest : TestBase, IDisposable
     [Fact]
     public void Download_ValidPath_Repository()
     {
-        string downloadPath = GenerateDownloadPath();
-        Result<Empty, Error<string>> result = _downloader.Download(downloadPath);
+        Result<Empty, Error<string>> result = _downloader.Download(_downloadPath);
 
-        AssertDownloadSuccess(result, downloadPath);
+        AssertDownloadSuccess(result);
     }
 
     [Fact]
     public void Download_AlreadyExistingPath_UpdatesRepository()
     {
-        string downloadPath = GenerateDownloadPath();
-        _downloader.Download(downloadPath);
+        _downloader.Download(_downloadPath);
 
-        Result<Empty, Error<string>> result = _downloader.Download(downloadPath);
+        Result<Empty, Error<string>> result = _downloader.Download(_downloadPath);
 
-        AssertDownloadSuccess(result, downloadPath);
+        AssertDownloadSuccess(result);
     }
 
-    private string GenerateDownloadPath()
-    {
-        return $"{Directory.GetCurrentDirectory()}/{Guid.NewGuid().ToString()}";
-    }
-
-    private void AssertDownloadSuccess(Result<Empty, Error<string>> result, string downloadPath)
+    private void AssertDownloadSuccess(Result<Empty, Error<string>> result)
     {
         Assert.True(result.IsOk);
-        Assert.Equal(new Empty(), result.Unwrap());
-        Assert.True(Directory.Exists(downloadPath));
-        Assert.True(Directory.Exists($"{downloadPath}/.git"));
+        Assert.True(Directory.Exists(_downloadPath));
+        Assert.True(Directory.Exists($"{_downloadPath}/.git"));
     }
 }
