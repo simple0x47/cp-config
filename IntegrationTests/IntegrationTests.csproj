@@ -25,4 +25,9 @@
         <PackageReference Include="xunit.runner.visualstudio" Version="2.5.4"/>
         <PackageReference Include="Moq" Version="4.20.69"/>
     </ItemGroup>
+
+    <ItemGroup>
+        <Content Include="TestData\MicroconfigConfigBuilderTest\basic\components\.DS_Store"/>
+        <Content Include="TestData\MicroconfigConfigBuilderTest\basic\envs\.DS_Store"/>
+    </ItemGroup>
 </Project>
