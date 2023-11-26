@@ -23,7 +23,7 @@ public class GitDownloaderTest : TestBase, IDisposable
     [Fact]
     public void Download_ValidPath_Repository()
     {
-        Result<Empty, Error<string>> result = _downloader.Download(_downloadPath);
+        Result<Empty, Error<string>> result = _downloader.Download(_downloadPath, false);
 
         AssertDownloadSuccess(result);
     }
@@ -31,9 +31,9 @@ public class GitDownloaderTest : TestBase, IDisposable
     [Fact]
     public void Download_AlreadyExistingPath_UpdatesRepository()
     {
-        _downloader.Download(_downloadPath);
+        _downloader.Download(_downloadPath, false);
 
-        Result<Empty, Error<string>> result = _downloader.Download(_downloadPath);
+        Result<Empty, Error<string>> result = _downloader.Download(_downloadPath, false);
 
         AssertDownloadSuccess(result);
     }

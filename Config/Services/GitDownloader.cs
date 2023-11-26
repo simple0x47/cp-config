@@ -63,13 +63,15 @@ public class GitDownloader : IDownloader
         }
     }
 
-    public Result<Empty, Error<string>> Download(string path)
+    public Result<Empty, Error<string>> Download(string path, bool update)
     {
         try
         {
             // Update already existing repository or clone it if it doesn't exist
             if (Directory.Exists(path) && Directory.Exists($"{path}/.git"))
             {
+                if (!update) return Result<Empty, Error<string>>.Ok(new Empty());
+
                 using Repository repository = new(path);
                 Commands.Pull(repository, _merger, _pullOptions);
             }

@@ -10,6 +10,7 @@ public interface IDownloader : IDisposable
     ///     If the path already exists, the content is updated to the latest version.
     /// </summary>
     /// <param name="path">Path where the configuration is downloaded into.</param>
+    /// <param name="update">Indicator whether or not to update the previously downloaded configuration.</param>
     /// <returns><see cref="Empty" /> or an error.</returns>
-    public Result<Empty, Error<string>> Download(string path);
+    public Result<Empty, Error<string>> Download(string path, bool update);
 }
