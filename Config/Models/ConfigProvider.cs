@@ -26,24 +26,24 @@ public class ConfigProvider : IDisposable
     /// <summary>
     ///     Generates a packed file containing the requested configuration.
     /// </summary>
-    /// <returns>A string indicating the package's file path or an error.</returns>
-    public Result<string, Error<string>> Generate()
+    /// <returns>A byte array containing the package's bytes or an error.</returns>
+    public Result<byte[], Error<string>> Generate()
     {
         string downloadPath = $"d-{Guid.NewGuid().ToString()}";
         Result<Empty, Error<string>> downloadResult = _downloader.Download(downloadPath);
 
-        if (!downloadResult.IsOk) return Result<string, Error<string>>.Err(downloadResult.UnwrapErr());
+        if (!downloadResult.IsOk) return Result<byte[], Error<string>>.Err(downloadResult.UnwrapErr());
 
         string targetPath = $"t-{Guid.NewGuid().ToString()}";
         Result<Empty, Error<string>> configBuilderResult = _configBuilder.Build(downloadPath, targetPath);
 
-        if (!configBuilderResult.IsOk) return Result<string, Error<string>>.Err(configBuilderResult.UnwrapErr());
+        if (!configBuilderResult.IsOk) return Result<byte[], Error<string>>.Err(configBuilderResult.UnwrapErr());
 
         string packageFile = $"p-{Guid.NewGuid().ToString()}.{_packager.PackageExtension}";
         Result<Empty, Error<string>> packagerResult = _packager.Package(targetPath, packageFile);
 
-        if (!packagerResult.IsOk) return Result<string, Error<string>>.Err(packagerResult.UnwrapErr());
+        if (!packagerResult.IsOk) return Result<byte[], Error<string>>.Err(packagerResult.UnwrapErr());
 
-        return Result<string, Error<string>>.Ok(packageFile);
+        return Result<byte[], Error<string>>.Ok(File.ReadAllBytes(packageFile));
     }
 }

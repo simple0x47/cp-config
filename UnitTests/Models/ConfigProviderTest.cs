@@ -35,7 +35,7 @@ public class ConfigProviderTest : TestBase, IDisposable
     [Fact]
     public void Generate_Correctly()
     {
-        Result<string, Error<string>> result = _configProvider.Generate();
+        Result<byte[], Error<string>> result = _configProvider.Generate();
 
         Assert.True(result.IsOk);
         Assert.NotEmpty(result.Unwrap());
