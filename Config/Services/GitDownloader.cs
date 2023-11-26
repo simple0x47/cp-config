@@ -23,7 +23,7 @@ public class GitDownloader : IDownloader
 
         _downloadedPaths = new List<string>();
 
-        CredentialsHandler handler = (url, fromUrl, types) => new SecureUsernamePasswordCredentials
+        CredentialsHandler handler = (_, _, _) => new SecureUsernamePasswordCredentials
         {
             Username = _secretsManager.Get(_config["GitDownloader:UsernameSecret"]),
             Password = SecretStringProvider.GetSecureStringFromString(
@@ -72,10 +72,8 @@ public class GitDownloader : IDownloader
             // Update already existing repository or clone it if it doesn't exist
             if (Directory.Exists(path) && Directory.Exists($"{path}/.git"))
             {
-                using (Repository repository = new(path))
-                {
-                    Commands.Pull(repository, _merger, _pullOptions);
-                }
+                using Repository repository = new(path);
+                Commands.Pull(repository, _merger, _pullOptions);
             }
             else
             {
