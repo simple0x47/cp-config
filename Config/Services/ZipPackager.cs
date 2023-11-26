@@ -12,6 +12,8 @@ public class ZipPackager : IPackager
         _packageFiles = new List<string>();
     }
 
+    public string PackageExtension { get; } = "zip";
+
     public void Dispose()
     {
         foreach (string packageFile in _packageFiles)

@@ -4,6 +4,8 @@ namespace Cuplan.Config.Services;
 
 public interface IPackager : IDisposable
 {
+    public string PackageExtension { get; }
+
     /// <summary>
     ///     Packages the contents of a directory within a file whose path is the one specified.
     /// </summary>
