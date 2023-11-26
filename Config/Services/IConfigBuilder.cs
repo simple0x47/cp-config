@@ -2,7 +2,7 @@ using Core;
 
 namespace Cuplan.Config.Services;
 
-public interface IConfigBuilder
+public interface IConfigBuilder : IDisposable
 {
     /// <summary>
     ///     Builds the configuration directory.
