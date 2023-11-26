@@ -1,4 +1,6 @@
 using System.Security.Claims;
+using Cuplan.Config.Models;
+using Cuplan.Config.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
@@ -23,6 +25,14 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers().AddNewtonsoftJson();
+
+// Services
+builder.Services.AddScoped<IDownloader, GitDownloader>();
+builder.Services.AddScoped<IConfigBuilder, MicroconfigConfigBuilder>();
+builder.Services.AddScoped<IPackager, ZipPackager>();
+
+// Models
+builder.Services.AddScoped<ConfigProvider>();
 
 WebApplication app = builder.Build();
 

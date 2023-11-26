@@ -5,15 +5,18 @@ namespace Cuplan.Config.Models;
 
 public class ConfigProvider : IDisposable
 {
+    private readonly IConfiguration _config;
     private readonly IConfigBuilder _configBuilder;
     private readonly IDownloader _downloader;
     private readonly IPackager _packager;
 
-    public ConfigProvider(IDownloader downloader, IConfigBuilder configBuilder, IPackager packager)
+    public ConfigProvider(IDownloader downloader, IConfigBuilder configBuilder, IPackager packager,
+        IConfiguration config)
     {
         _downloader = downloader;
         _configBuilder = configBuilder;
         _packager = packager;
+        _config = config;
     }
 
     public void Dispose()
@@ -29,8 +32,13 @@ public class ConfigProvider : IDisposable
     /// <returns>A byte array containing the package's bytes or an error.</returns>
     public Result<byte[], Error<string>> Generate()
     {
-        string downloadPath = $"d-{Guid.NewGuid().ToString()}";
-        Result<Empty, Error<string>> downloadResult = _downloader.Download(downloadPath);
+        string? downloadPath = _config.GetValue<string>("ConfigProvider:DownloadPath");
+
+        if (downloadPath is null)
+            return Result<byte[], Error<string>>.Err(new Error<string>(ErrorKind.UnexpectedNull,
+                "config provider's download path is null"));
+
+        Result<Empty, Error<string>> downloadResult = _downloader.Download(downloadPath, false);
 
         if (!downloadResult.IsOk) return Result<byte[], Error<string>>.Err(downloadResult.UnwrapErr());
 
