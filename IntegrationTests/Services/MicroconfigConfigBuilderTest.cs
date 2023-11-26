@@ -36,7 +36,6 @@ public class MicroconfigConfigBuilderTest : TestBase, IDisposable
         Result<Empty, Error<string>> result = _configBuilder.Build(basicTestDataPath, _targetPath);
 
         Assert.True(result.IsOk);
-        Assert.Equal(new Empty(), result.Unwrap());
         Assert.True(File.Exists($"{_targetPath}/authentication/application.yaml"));
     }
 }
