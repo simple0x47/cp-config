@@ -9,6 +9,7 @@ public class ConfigProvider : IDisposable
     private readonly IConfiguration _config;
     private readonly IConfigBuilder _configBuilder;
     private readonly IDownloader _downloader;
+    private readonly string _downloadPath;
     private readonly IPackager _packager;
 
     public ConfigProvider(IDownloader downloader, IConfigBuilder configBuilder, IPackager packager,
@@ -20,6 +21,7 @@ public class ConfigProvider : IDisposable
         _config = config;
         _acquireReaderLockTimeout =
             TimeSpan.FromSeconds(double.Parse(_config["ConfigProvider:AcquireReaderLockTimeout"]));
+        _downloadPath = _config.GetValue<string>("ConfigProvider:DownloadPath")!;
     }
 
     public void Dispose()
@@ -36,13 +38,7 @@ public class ConfigProvider : IDisposable
     /// <returns>A byte array containing the package's bytes or an error.</returns>
     public Result<byte[], Error<string>> Generate(string component)
     {
-        string? downloadPath = _config.GetValue<string>("ConfigProvider:DownloadPath");
-
-        if (downloadPath is null)
-            return Result<byte[], Error<string>>.Err(new Error<string>(ErrorKind.UnexpectedNull,
-                "config provider's download path is null"));
-
-        Result<Empty, Error<string>> downloadResult = _downloader.Download(downloadPath, false);
+        Result<Empty, Error<string>> downloadResult = _downloader.Download(_downloadPath, false);
 
         if (!downloadResult.IsOk) return Result<byte[], Error<string>>.Err(downloadResult.UnwrapErr());
 
@@ -53,7 +49,7 @@ public class ConfigProvider : IDisposable
 
         try
         {
-            Result<Empty, Error<string>> configBuilderResult = _configBuilder.Build(downloadPath, targetPath);
+            Result<Empty, Error<string>> configBuilderResult = _configBuilder.Build(_downloadPath, targetPath);
 
             if (!configBuilderResult.IsOk) return Result<byte[], Error<string>>.Err(configBuilderResult.UnwrapErr());
         }
@@ -79,5 +75,10 @@ public class ConfigProvider : IDisposable
         if (!packagerResult.IsOk) return Result<byte[], Error<string>>.Err(packagerResult.UnwrapErr());
 
         return Result<byte[], Error<string>>.Ok(File.ReadAllBytes(packageFile));
+    }
+
+    public Result<Empty, Error<string>> Refresh()
+    {
+        return _downloader.Download(_downloadPath, true);
     }
 }
