@@ -18,7 +18,7 @@ public class ConfigController : ControllerBase
 
     [Route("api/[controller]/{microservice}")]
     [HttpGet]
-    public IActionResult Register([FromRoute] string microservice)
+    public IActionResult GetConfig([FromRoute] string microservice)
     {
         Result<byte[], Error<string>> result = _configProvider.Generate(microservice);
 

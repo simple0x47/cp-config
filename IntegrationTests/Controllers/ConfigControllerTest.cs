@@ -28,7 +28,7 @@ public class ConfigControllerTest : TestBase, IDisposable
     }
 
     [Fact]
-    public async Task Config_RespondsWithZipFile()
+    public async Task GetConfig_RespondsWithZipFile()
     {
         string dummyConfigFilePath = $"{_targetDirectory}/application.yaml";
         string expectedConfigFile = $"{TestDataPath}/{GetType().Name}/application.yaml";
