@@ -2,8 +2,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Config", "Config\Config.csproj", "{354DFB23-276B-4E4D-8B48-C124CD61B1DD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "UnitTests\UnitTests.csproj", "{32AC5E10-E680-4180-BA75-4D90EF9583A0}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IntegrationTests", "IntegrationTests\IntegrationTests.csproj", "{DA02263A-AED0-4775-B9CE-41B9F15B48D6}"
 EndProject
 Global
@@ -16,10 +14,6 @@ Global
 		{354DFB23-276B-4E4D-8B48-C124CD61B1DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{354DFB23-276B-4E4D-8B48-C124CD61B1DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{354DFB23-276B-4E4D-8B48-C124CD61B1DD}.Release|Any CPU.Build.0 = Release|Any CPU
-		{32AC5E10-E680-4180-BA75-4D90EF9583A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{32AC5E10-E680-4180-BA75-4D90EF9583A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{32AC5E10-E680-4180-BA75-4D90EF9583A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{32AC5E10-E680-4180-BA75-4D90EF9583A0}.Release|Any CPU.Build.0 = Release|Any CPU
 		{DA02263A-AED0-4775-B9CE-41B9F15B48D6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{DA02263A-AED0-4775-B9CE-41B9F15B48D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DA02263A-AED0-4775-B9CE-41B9F15B48D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
