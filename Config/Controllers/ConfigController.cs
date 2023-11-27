@@ -16,7 +16,7 @@ public class ConfigController : ControllerBase
         _configProvider = configProvider;
     }
 
-    [Route("api/[controller]/{microservice}")]
+    [Route("api/[controller]/get/{microservice}")]
     [HttpGet]
     public IActionResult GetConfig([FromRoute] string microservice)
     {
@@ -40,5 +40,20 @@ public class ConfigController : ControllerBase
         }
 
         return File(result.Unwrap(), "application/zip", "config.zip");
+    }
+
+    [Route("api/[controller]/refresh")]
+    [HttpGet]
+    public IActionResult Refresh()
+    {
+        Result<Empty, Error<string>> result = _configProvider.Refresh();
+
+        if (!result.IsOk)
+        {
+            Error<string> error = result.UnwrapErr();
+            return StatusCode(StatusCodes.Status500InternalServerError, error.ErrorKind);
+        }
+
+        return NoContent();
     }
 }
