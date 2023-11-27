@@ -75,7 +75,7 @@ jobs:
           dotnet test CuplanConfig.sln
       - name: Build & package
         run: |
-          cd Authentication
+          cd Config
           dotnet publish Config.csproj -c Release -o app
           zip -r app.zip ./app
         env:
