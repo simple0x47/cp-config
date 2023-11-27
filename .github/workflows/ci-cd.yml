@@ -1,0 +1,141 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  DOTNET_DOWNLOAD_URL: "https://dotnetcli.azureedge.net/dotnet/Sdk/8.0.100/dotnet-sdk-8.0.100-linux-x64.tar.gz"
+  DOTNET_SDK_VERSION: "8.0.100"
+  DOTNET_FILE: "dotnet-sdk-8.0.100-linux-x64.tar.gz"
+  ARTIFACT_NAME: "le_baguette"
+  SECRETS_MANAGER_ACCESS_TOKEN: ${{ secrets.SECRETS_MANAGER_ACCESS_TOKEN }}
+  ASPNETCORE_ENVIRONMENT: "Actions"
+  PATCH_VERSION: ${{ github.run_number }}
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      src: ${{ steps.filter.outputs.src }}
+      test: ${{ steps.filter.outputs.test }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            src:
+              - 'Config/**'
+              - 'Dockerfile'
+              - 'CuplanConfig.sln'
+            test:
+              - 'IntegrationTests/**'
+              - '.github/workflows/ci-cd.yml'
+              - '.github/workflows/ci-only.yml'
+  ci:
+    needs: changes
+    runs-on: ubuntu-latest
+    
+    timeout-minutes: 10
+
+    if: ${{ needs.changes.outputs.src == 'true' || needs.changes.outputs.test == 'true' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Download & install .NET SDK
+        run: |
+          mkdir dotnet
+          cd dotnet
+          curl -LO ${{ env.DOTNET_DOWNLOAD_URL }}
+          tar zxf ${{ env.DOTNET_FILE }}
+          rm -R ${{ env.DOTNET_FILE }}
+          cd ../
+          sudo rm -R /usr/share/dotnet
+          sudo mv -f ./dotnet /usr/share/
+      - name: Replace placeholder version
+        run: |
+          sed -i 's/5123.0.0/${{ vars.MAJOR_VERSION }}.${{ vars.MINOR_VERSION }}.${{ env.PATCH_VERSION }}/' ./Config/Config.csproj
+      - name: Run tests
+        run: |
+          mkdir bin
+          cd bin
+          curl -LO https://github.com/bitwarden/sdk/releases/download/bws-v0.3.0/bws-x86_64-unknown-linux-gnu-0.3.0.zip
+          unzip bws-x86_64-unknown-linux-gnu-0.3.0.zip
+          chmod +x bws
+          export PATH=$PATH:$PWD
+          cd ../
+          dotnet test CuplanConfig.sln
+      - name: Build & package
+        run: |
+          cd Authentication
+          dotnet publish Config.csproj -c Release -o app
+          zip -r app.zip ./app
+      - name: Upload binaries as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: ./Config/app.zip
+  cd:
+    needs: ci
+    if: ${{ needs.changes.outputs.src == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: ./
+      - name: Unzip artifact
+        run: |
+          unzip app.zip
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+          PATCH_VERSION: ${{ github.run_number }}
+        with:
+          tag_name: v${{ vars.MAJOR_VERSION }}.${{ vars.MINOR_VERSION }}.${{ env.PATCH_VERSION }}
+          release_name: v${{ vars.MAJOR_VERSION }}.${{ vars.MINOR_VERSION }}.${{ env.PATCH_VERSION }}
+          draft: false
+          prerelease: false
+      - name: Upload release asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./app.zip
+          asset_name: app.zip
+          asset_content_type: application/zip
+      - name: Build Docker image
+        run: |
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+          docker build -t baguette6/cp-config:${{ vars.MAJOR_VERSION }}.${{ vars.MINOR_VERSION }}.${{ env.PATCH_VERSION }} .
+          docker tag baguette6/cp-config:${{ vars.MAJOR_VERSION }}.${{ vars.MINOR_VERSION }}.${{ env.PATCH_VERSION }} baguette6/cp-config:latest
+          docker push baguette6/cp-config:${{ vars.MAJOR_VERSION }}.${{ vars.MINOR_VERSION }}.${{ env.PATCH_VERSION }}
+          docker push baguette6/cp-config:latest
+  
+  clean:
+    if: success() || failure()
+    
+    needs: cd
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Remove artifact
+        uses: geekyeggo/delete-artifact@v2
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
