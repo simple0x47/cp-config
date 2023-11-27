@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Core.Secrets;
 using Cuplan.Config.Models;
 using Cuplan.Config.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -25,6 +26,9 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers().AddNewtonsoftJson();
+
+// Other dependencies
+builder.Services.AddSingleton<ISecretsManager, BitwardenSecretsManager>();
 
 // Services
 builder.Services.AddScoped<IDownloader, GitDownloader>();
