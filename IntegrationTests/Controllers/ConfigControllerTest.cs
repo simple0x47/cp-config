@@ -30,6 +30,9 @@ public class ConfigControllerTest : TestBase, IDisposable
     [Fact]
     public async Task Config_RespondsWithZipFile()
     {
+        string dummyConfigFilePath = $"{_targetDirectory}/application.yaml";
+        string expectedConfigFile = $"{TestDataPath}/{GetType().Name}/application.yaml";
+
         HttpResponseMessage response = await Client.GetAsync($"{ConfigApi}/dummy");
         _contentStream = await response.Content.ReadAsStreamAsync();
 
@@ -40,5 +43,7 @@ public class ConfigControllerTest : TestBase, IDisposable
 
         Assert.True(Directory.Exists(_targetDirectory));
         Assert.NotEmpty(Directory.GetFileSystemEntries(_targetDirectory));
+        Assert.True(File.Exists(dummyConfigFilePath));
+        Assert.Equal(await File.ReadAllTextAsync(expectedConfigFile), await File.ReadAllTextAsync(dummyConfigFilePath));
     }
 }

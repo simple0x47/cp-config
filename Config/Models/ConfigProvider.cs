@@ -29,8 +29,9 @@ public class ConfigProvider : IDisposable
     /// <summary>
     ///     Generates a packed file containing the requested configuration.
     /// </summary>
+    /// <param name="component">Component which will be packed.</param>
     /// <returns>A byte array containing the package's bytes or an error.</returns>
-    public Result<byte[], Error<string>> Generate()
+    public Result<byte[], Error<string>> Generate(string component)
     {
         string? downloadPath = _config.GetValue<string>("ConfigProvider:DownloadPath");
 
@@ -47,8 +48,14 @@ public class ConfigProvider : IDisposable
 
         if (!configBuilderResult.IsOk) return Result<byte[], Error<string>>.Err(configBuilderResult.UnwrapErr());
 
+        string componentPath = $"{targetPath}/{component}";
+
+        if (!Directory.Exists(componentPath))
+            return Result<byte[], Error<string>>.Err(new Error<string>(ErrorKind.NotFound,
+                $"component '{component}' could not be found"));
+
         string packageFile = $"p-{Guid.NewGuid().ToString()}.{_packager.PackageExtension}";
-        Result<Empty, Error<string>> packagerResult = _packager.Package(targetPath, packageFile);
+        Result<Empty, Error<string>> packagerResult = _packager.Package(componentPath, packageFile);
 
         if (!packagerResult.IsOk) return Result<byte[], Error<string>>.Err(packagerResult.UnwrapErr());
 

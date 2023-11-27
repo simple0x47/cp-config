@@ -9,6 +9,8 @@ namespace Cuplan.Config.IntegrationTests.Models;
 
 public class ConfigProviderTest : TestBase, IDisposable
 {
+    private const string EnvironmentName = "development";
+    private const string DummyComponent = "dummy";
     private readonly ConfigProvider _configProvider;
 
     public ConfigProviderTest()
@@ -17,7 +19,7 @@ public class ConfigProviderTest : TestBase, IDisposable
         Mock<IWebHostEnvironment> mockHostEnvironment = new();
         mockHostEnvironment.SetupProperty(h => h.EnvironmentName);
         IWebHostEnvironment hostEnvironment = mockHostEnvironment.Object;
-        hostEnvironment.EnvironmentName = "development";
+        hostEnvironment.EnvironmentName = EnvironmentName;
         IConfigBuilder configBuilder = new MicroconfigConfigBuilder(hostEnvironment, Config);
         IPackager packager = new ZipPackager();
 
@@ -32,7 +34,7 @@ public class ConfigProviderTest : TestBase, IDisposable
     [Fact]
     public void Generate_Correctly()
     {
-        Result<byte[], Error<string>> result = _configProvider.Generate();
+        Result<byte[], Error<string>> result = _configProvider.Generate(DummyComponent);
 
         Assert.True(result.IsOk);
         Assert.NotEmpty(result.Unwrap());

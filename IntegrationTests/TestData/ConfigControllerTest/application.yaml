@@ -1,0 +1,9 @@
+addon: 444
+
+development: true
+
+example: 1234
+
+name: dummy
+
+production: false
