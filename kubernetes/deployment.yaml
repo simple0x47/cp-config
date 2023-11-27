@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cp-config
+  labels:
+    app: cp-config
+    env: production
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cp-config
+      env: production
+  template:
+    metadata:
+      name: cp-config
+      labels:
+        app: cp-config
+        env: production
+    spec:
+      containers:
+        - name: cp-config
+          image: baguette6/cp-config:latest
+          imagePullPolicy: Always
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: ASPNETCORE_URLS
+              value: "http://*:80"
+      restartPolicy: Always
