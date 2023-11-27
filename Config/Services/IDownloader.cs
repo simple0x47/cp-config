@@ -13,4 +13,6 @@ public interface IDownloader : IDisposable
     /// <param name="update">Indicator whether or not to update the previously downloaded configuration.</param>
     /// <returns><see cref="Empty" /> or an error.</returns>
     public Result<Empty, Error<string>> Download(string path, bool update);
+
+    public ReaderWriterLock GetReaderWriterLock();
 }

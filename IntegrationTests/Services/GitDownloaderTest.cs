@@ -4,6 +4,7 @@ using Xunit;
 
 namespace Cuplan.Config.IntegrationTests.Services;
 
+[Collection("Downloader")]
 public class GitDownloaderTest : TestBase, IDisposable
 {
     private readonly IDownloader _downloader;

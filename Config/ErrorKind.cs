@@ -7,4 +7,6 @@ public class ErrorKind
     public const string PackageFailure = "package_failure";
     public const string UnexpectedNull = "unexpected_null";
     public const string NotFound = "not_found";
+    public const string UnknownError = "unknown_error";
+    public const string LockFailure = "lock_failure";
 }

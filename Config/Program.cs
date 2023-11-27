@@ -31,7 +31,7 @@ builder.Services.AddControllers().AddNewtonsoftJson();
 builder.Services.AddSingleton<ISecretsManager, BitwardenSecretsManager>();
 
 // Services
-builder.Services.AddScoped<IDownloader, GitDownloader>();
+builder.Services.AddSingleton<IDownloader, GitDownloader>();
 builder.Services.AddScoped<IConfigBuilder, MicroconfigConfigBuilder>();
 builder.Services.AddScoped<IPackager, ZipPackager>();
 

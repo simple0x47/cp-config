@@ -5,6 +5,7 @@ namespace Cuplan.Config.Models;
 
 public class ConfigProvider : IDisposable
 {
+    private readonly TimeSpan _acquireReaderLockTimeout;
     private readonly IConfiguration _config;
     private readonly IConfigBuilder _configBuilder;
     private readonly IDownloader _downloader;
@@ -17,6 +18,8 @@ public class ConfigProvider : IDisposable
         _configBuilder = configBuilder;
         _packager = packager;
         _config = config;
+        _acquireReaderLockTimeout =
+            TimeSpan.FromSeconds(double.Parse(_config["ConfigProvider:AcquireReaderLockTimeout"]));
     }
 
     public void Dispose()
@@ -43,10 +46,26 @@ public class ConfigProvider : IDisposable
 
         if (!downloadResult.IsOk) return Result<byte[], Error<string>>.Err(downloadResult.UnwrapErr());
 
-        string targetPath = $"t-{Guid.NewGuid().ToString()}";
-        Result<Empty, Error<string>> configBuilderResult = _configBuilder.Build(downloadPath, targetPath);
+        ReaderWriterLock readerWriterLock = _downloader.GetReaderWriterLock();
 
-        if (!configBuilderResult.IsOk) return Result<byte[], Error<string>>.Err(configBuilderResult.UnwrapErr());
+        _downloader.GetReaderWriterLock().AcquireReaderLock(_acquireReaderLockTimeout);
+        string targetPath = $"t-{Guid.NewGuid().ToString()}";
+
+        try
+        {
+            Result<Empty, Error<string>> configBuilderResult = _configBuilder.Build(downloadPath, targetPath);
+
+            if (!configBuilderResult.IsOk) return Result<byte[], Error<string>>.Err(configBuilderResult.UnwrapErr());
+        }
+        catch (Exception e)
+        {
+            return Result<byte[], Error<string>>.Err(new Error<string>(ErrorKind.UnknownError,
+                $"an unexpected exception occurred: {e.Message}"));
+        }
+        finally
+        {
+            readerWriterLock.ReleaseReaderLock();
+        }
 
         string componentPath = $"{targetPath}/{component}";
 

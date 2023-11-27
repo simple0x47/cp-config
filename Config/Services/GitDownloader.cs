@@ -8,10 +8,11 @@ namespace Cuplan.Config.Services;
 
 public class GitDownloader : IDownloader
 {
+    private readonly TimeSpan _acquireWriterLockTimeout;
     private readonly CloneOptions _cloneOptions;
     private readonly IConfiguration _config;
-
     private readonly IList<string> _downloadedPaths;
+    private readonly ReaderWriterLock _lock;
     private readonly Signature _merger;
     private readonly PullOptions _pullOptions;
 
@@ -51,6 +52,10 @@ public class GitDownloader : IDownloader
 
         _merger = new Signature(_config["GitDownloader:Merge:Name"], _config["GitDownloader:Merge:Email"],
             DateTimeOffset.Now);
+
+        _acquireWriterLockTimeout =
+            TimeSpan.FromSeconds(double.Parse(_config["GitDownloader:AcquireWriterLockTimeout"]));
+        _lock = new ReaderWriterLock();
     }
 
     public void Dispose()
@@ -72,14 +77,15 @@ public class GitDownloader : IDownloader
             {
                 if (!update) return Result<Empty, Error<string>>.Ok(new Empty());
 
-                using Repository repository = new(path);
-                Commands.Pull(repository, _merger, _pullOptions);
+                Result<Empty, Error<string>> result = PullChanges(path);
+
+                if (!result.IsOk) return Result<Empty, Error<string>>.Err(result.UnwrapErr());
             }
             else
             {
-                Repository.Clone(_config["GitDownloader:Repository"], path, _cloneOptions);
+                Result<Empty, Error<string>> result = CloneRepository(path);
 
-                _downloadedPaths.Add(path);
+                if (!result.IsOk) return Result<Empty, Error<string>>.Err(result.UnwrapErr());
             }
 
             return Result<Empty, Error<string>>.Ok(new Empty());
@@ -88,6 +94,56 @@ public class GitDownloader : IDownloader
         {
             return Result<Empty, Error<string>>.Err(new Error<string>(ErrorKind.DownloadFailure,
                 $"failed to download configuration: {e.Message}"));
+        }
+    }
+
+    public ReaderWriterLock GetReaderWriterLock()
+    {
+        return _lock;
+    }
+
+    private Result<Empty, Error<string>> PullChanges(string path)
+    {
+        _lock.AcquireWriterLock(_acquireWriterLockTimeout);
+
+        try
+        {
+            using Repository repository = new(path);
+            Commands.Pull(repository, _merger, _pullOptions);
+
+            return Result<Empty, Error<string>>.Ok(new Empty());
+        }
+        catch (Exception e)
+        {
+            return Result<Empty, Error<string>>.Err(new Error<string>(ErrorKind.DownloadFailure,
+                $"pulling changes from repository has thrown an exception: {e.Message}"));
+        }
+        finally
+        {
+            _lock.ReleaseWriterLock();
+        }
+    }
+
+    private Result<Empty, Error<string>> CloneRepository(string path)
+    {
+        _lock.AcquireWriterLock(_acquireWriterLockTimeout);
+
+        try
+        {
+            Repository.Clone(_config["GitDownloader:Repository"], path, _cloneOptions);
+
+            _downloadedPaths.Add(path);
+
+            return Result<Empty, Error<string>>.Ok(new Empty());
+        }
+        catch (Exception e)
+        {
+            return Result<Empty, Error<string>>.Err(new Error<string>(ErrorKind.DownloadFailure,
+                $"cloning repository has thrown an exception: {e.Message}"));
+        }
+        finally
+        {
+            _lock.ReleaseWriterLock();
         }
     }
 }

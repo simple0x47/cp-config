@@ -7,6 +7,7 @@ using Xunit;
 
 namespace Cuplan.Config.IntegrationTests.Models;
 
+[Collection("Downloader")]
 public class ConfigProviderTest : TestBase, IDisposable
 {
     private const string EnvironmentName = "development";
