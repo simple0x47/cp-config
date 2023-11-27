@@ -6,6 +6,7 @@ using Xunit.Abstractions;
 
 namespace Cuplan.Config.IntegrationTests.Controllers;
 
+[Collection("Downloader")]
 public class ConfigControllerTest : TestBase, IDisposable
 {
     private const string ConfigApi = "api/Config";
@@ -33,7 +34,7 @@ public class ConfigControllerTest : TestBase, IDisposable
         string dummyConfigFilePath = $"{_targetDirectory}/application.yaml";
         string expectedConfigFile = $"{TestDataPath}/{GetType().Name}/application.yaml";
 
-        HttpResponseMessage response = await Client.GetAsync($"{ConfigApi}/dummy");
+        HttpResponseMessage response = await Client.GetAsync($"{ConfigApi}/get/dummy");
         _contentStream = await response.Content.ReadAsStreamAsync();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -45,5 +46,13 @@ public class ConfigControllerTest : TestBase, IDisposable
         Assert.NotEmpty(Directory.GetFileSystemEntries(_targetDirectory));
         Assert.True(File.Exists(dummyConfigFilePath));
         Assert.Equal(await File.ReadAllTextAsync(expectedConfigFile), await File.ReadAllTextAsync(dummyConfigFilePath));
+    }
+
+    [Fact]
+    public async Task Refresh_RespondsWithNoContent()
+    {
+        HttpResponseMessage response = await Client.GetAsync($"{ConfigApi}/refresh");
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
     }
 }
