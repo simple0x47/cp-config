@@ -11,7 +11,7 @@ env:
   DOTNET_FILE: "dotnet-sdk-8.0.100-linux-x64.tar.gz"
   ARTIFACT_NAME: "le_baguette"
   SECRETS_MANAGER_ACCESS_TOKEN: ${{ secrets.SECRETS_MANAGER_ACCESS_TOKEN }}
-  ASPNETCORE_ENVIRONMENT: "Actions"
+  ASPNETCORE_ENVIRONMENT: "Development"
   PATCH_VERSION: ${{ github.run_number }}
 
 jobs:
@@ -78,6 +78,8 @@ jobs:
           cd Authentication
           dotnet publish Config.csproj -c Release -o app
           zip -r app.zip ./app
+        env:
+          ASPNETCORE_ENVIRONMENT: "Production"
       - name: Upload binaries as artifact
         uses: actions/upload-artifact@v3
         with:
