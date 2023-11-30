@@ -141,7 +141,7 @@ public class GitDownloader : IDownloader
         catch (Exception e)
         {
             return Result<Empty, Error<string>>.Err(new Error<string>(ErrorKind.DownloadFailure,
-                $"cloning repository has thrown an exception: {e.StackTrace}"));
+                $"cloning repository has thrown an exception '{e.GetType().Name}': {e.Message}: {e.StackTrace}"));
         }
         finally
         {
