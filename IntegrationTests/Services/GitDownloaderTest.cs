@@ -1,5 +1,7 @@
 using Core;
 using Cuplan.Config.Services;
+using Microsoft.Extensions.Logging;
+using Moq;
 using Xunit;
 
 namespace Cuplan.Config.IntegrationTests.Services;
@@ -12,7 +14,9 @@ public class GitDownloaderTest : TestBase, IDisposable
 
     public GitDownloaderTest()
     {
-        _downloader = new GitDownloader(Config, SecretsManager);
+        Mock<ILogger<GitDownloader>> logger = new();
+
+        _downloader = new GitDownloader(logger.Object, Config, SecretsManager);
         _downloadPath = $"{Directory.GetCurrentDirectory()}/{Guid.NewGuid().ToString()}";
     }
 

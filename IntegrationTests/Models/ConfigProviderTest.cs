@@ -2,6 +2,7 @@ using Core;
 using Cuplan.Config.Models;
 using Cuplan.Config.Services;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
@@ -16,7 +17,8 @@ public class ConfigProviderTest : TestBase, IDisposable
 
     public ConfigProviderTest()
     {
-        IDownloader downloader = new GitDownloader(Config, SecretsManager);
+        Mock<ILogger<GitDownloader>> logger = new();
+        IDownloader downloader = new GitDownloader(logger.Object, Config, SecretsManager);
         Mock<IWebHostEnvironment> mockHostEnvironment = new();
         mockHostEnvironment.SetupProperty(h => h.EnvironmentName);
         IWebHostEnvironment hostEnvironment = mockHostEnvironment.Object;

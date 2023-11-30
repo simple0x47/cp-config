@@ -13,11 +13,13 @@ public class GitDownloader : IDownloader
     private readonly IConfiguration _config;
     private readonly IList<string> _downloadedPaths;
     private readonly ReaderWriterLock _lock;
+    private readonly ILogger<GitDownloader> _logger;
     private readonly Signature _merger;
     private readonly PullOptions _pullOptions;
 
-    public GitDownloader(IConfiguration config, ISecretsManager secretsManager)
+    public GitDownloader(ILogger<GitDownloader> logger, IConfiguration config, ISecretsManager secretsManager)
     {
+        _logger = logger;
         _config = config;
 
         _downloadedPaths = new List<string>();
@@ -130,6 +132,12 @@ public class GitDownloader : IDownloader
 
         try
         {
+            if (_config is null) _logger.LogError("_config is null");
+            if (_config["GitDownloader:Repository"] is null)
+                _logger.LogError("_config['GitDownloader:Repository'] is null.");
+            if (path is null) _logger.LogError("path is null");
+            if (_cloneOptions is null) _logger.LogError("_cloneOptions is null");
+
             Repository.Clone(_config["GitDownloader:Repository"], path, _cloneOptions);
 
             _downloadedPaths.Add(path);
