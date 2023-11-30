@@ -132,27 +132,16 @@ public class GitDownloader : IDownloader
 
         try
         {
-            if (_config is null) _logger.LogError("_config is null");
-            if (_config["GitDownloader:Repository"] is null) // Simple
-                _logger.LogError("_config['GitDownloader:Repository'] is null.");
-            if (path is null) _logger.LogError("path is null"); // Alberto
-            if (_cloneOptions is null) _logger.LogError("_cloneOptions is null");
-            if (_downloadedPaths is null) _logger.LogError("_downloadedPaths is null");
-
-            _logger.LogInformation("1");
-
             Repository.Clone(_config["GitDownloader:Repository"], path, _cloneOptions);
 
-            _logger.LogInformation("2");
             _downloadedPaths.Add(path);
 
-            _logger.LogInformation("3");
             return Result<Empty, Error<string>>.Ok(new Empty());
         }
         catch (Exception e)
         {
             return Result<Empty, Error<string>>.Err(new Error<string>(ErrorKind.DownloadFailure,
-                $"cloning repository has thrown an exception: {e.Message}"));
+                $"cloning repository has thrown an exception: {e.StackTrace}"));
         }
         finally
         {
