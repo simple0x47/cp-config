@@ -32,6 +32,7 @@ public class ConfigController : ControllerBase
                 case ErrorKind.PackageFailure:
                 case ErrorKind.TimedOut:
                 case ErrorKind.UnexpectedNull:
+                    _logger.LogWarning($"Failed to obtain configuration: {error.Message}");
                     return StatusCode(StatusCodes.Status500InternalServerError, error.ErrorKind);
                 case ErrorKind.NotFound:
                     _logger.LogDebug($"Config for microservice '{microservice} not found.");
