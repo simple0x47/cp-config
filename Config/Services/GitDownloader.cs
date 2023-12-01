@@ -16,11 +16,13 @@ public class GitDownloader : IDownloader
     private readonly ILogger<GitDownloader> _logger;
     private readonly Signature _merger;
     private readonly PullOptions _pullOptions;
+    private readonly ISecretsManager _secretsManager;
 
     public GitDownloader(ILogger<GitDownloader> logger, IConfiguration config, ISecretsManager secretsManager)
     {
         _logger = logger;
         _config = config;
+        _secretsManager = secretsManager;
 
         _downloadedPaths = new List<string>();
 
@@ -136,6 +138,8 @@ public class GitDownloader : IDownloader
             _logger.LogInformation($"path: {path}");
             _logger.LogInformation($"repository: {_config["GitDownloader:Repository"]}");
             _logger.LogInformation($"clone options: {_cloneOptions}");
+            _logger.LogInformation($"username: {_secretsManager.Get(_config["GitDownloader:UsernameSecret"])}");
+            _logger.LogInformation($"password: {_secretsManager.Get(_config["GitDownloader:PasswordSecret"])}");
             Repository.Clone(_config["GitDownloader:Repository"], path, _cloneOptions);
 
             _downloadedPaths.Add(path);
