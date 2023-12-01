@@ -134,12 +134,6 @@ public class GitDownloader : IDownloader
 
         try
         {
-            _logger.LogInformation("CloneRepository arguments");
-            _logger.LogInformation($"path: {path}");
-            _logger.LogInformation($"repository: {_config["GitDownloader:Repository"]}");
-            _logger.LogInformation($"clone options: {_cloneOptions}");
-            _logger.LogInformation($"username: {_secretsManager.Get(_config["GitDownloader:UsernameSecret"])}");
-            _logger.LogInformation($"password: {_secretsManager.Get(_config["GitDownloader:PasswordSecret"])}");
             Repository.Clone(_config["GitDownloader:Repository"], path, _cloneOptions);
 
             _downloadedPaths.Add(path);
