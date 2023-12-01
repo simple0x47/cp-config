@@ -11,6 +11,5 @@ RUN apt-get update && \
     curl -LO https://github.com/microconfig/microconfig/releases/download/v4.9.2/microconfig-linux.zip && \
     unzip microconfig-linux.zip && \
     chmod +x microconfig && \
-    mv ./microconfig /usr/bin/ && \
-    chmod -R 777 ./
+    mv ./microconfig /usr/bin/
 ENTRYPOINT ["dotnet", "Cuplan.Config.dll"]
