@@ -9,4 +9,4 @@ chmod 600 ~/.ssh/host_ssh_private_key
 eval `ssh-agent`
 ssh-add ~/.ssh/*
 
-ssh -o StrictHostKeyChecking=accept-new $SSH_CONNECTION  'cd /home/gabriel/dev/cp-deployment && git pull && microk8s kubectl rollout restart -f cp-config.yaml'
+ssh -o StrictHostKeyChecking=accept-new $SSH_CONNECTION  'cd /home/gabriel/dev/cp-deployment/cp-config && git pull && microk8s kubectl rollout restart -f deployment.yaml'
