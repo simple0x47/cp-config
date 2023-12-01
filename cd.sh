@@ -1,6 +1,7 @@
 #!/bin/bash
 
 HOST_SSH_PRIVATE_KEY=$(bws secret get "7ad8e4fa-477a-425b-8377-b09e00885ab3" --access-token "$SECRETS_MANAGER_ACCESS_TOKEN" | jq -r '.value')
+
 mkdir ~/.ssh
 echo "$HOST_SSH_PRIVATE_KEY" > ~/.ssh/host_ssh_private_key
 chmod 600 ~/.ssh/host_ssh_private_key
