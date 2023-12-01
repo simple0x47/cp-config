@@ -11,7 +11,6 @@ public class ConfigProvider : IDisposable
     private readonly IDownloader _downloader;
     private readonly string _downloadPath;
     private readonly IPackager _packager;
-    private string? _lastPackageFilePath;
 
     public ConfigProvider(IDownloader downloader, IConfigBuilder configBuilder, IPackager packager,
         IConfiguration config)
@@ -43,9 +42,6 @@ public class ConfigProvider : IDisposable
 
         if (!downloadResult.IsOk) return Result<byte[], Error<string>>.Err(downloadResult.UnwrapErr());
 
-        if (downloadResult.Unwrap() == DownloadResult.NoChanges && _lastPackageFilePath is not null)
-            return Result<byte[], Error<string>>.Ok(File.ReadAllBytes(_lastPackageFilePath));
-
         ReaderWriterLock readerWriterLock = _downloader.GetReaderWriterLock();
 
         _downloader.GetReaderWriterLock().AcquireReaderLock(_acquireReaderLockTimeout);
@@ -75,11 +71,11 @@ public class ConfigProvider : IDisposable
             return Result<byte[], Error<string>>.Err(new Error<string>(ErrorKind.NotFound,
                 $"component '{component}' could not be found"));
 
-        _lastPackageFilePath = $"p-{Guid.NewGuid().ToString()}.{_packager.PackageExtension}";
-        Result<Empty, Error<string>> packagerResult = _packager.Package(componentPath, _lastPackageFilePath);
+        string packageFilePath = $"p-{Guid.NewGuid().ToString()}.{_packager.PackageExtension}";
+        Result<Empty, Error<string>> packagerResult = _packager.Package(componentPath, packageFilePath);
 
         if (!packagerResult.IsOk) return Result<byte[], Error<string>>.Err(packagerResult.UnwrapErr());
 
-        return Result<byte[], Error<string>>.Ok(File.ReadAllBytes(_lastPackageFilePath));
+        return Result<byte[], Error<string>>.Ok(File.ReadAllBytes(packageFilePath));
     }
 }
