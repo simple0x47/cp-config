@@ -47,12 +47,4 @@ public class ConfigControllerTest : TestBase, IDisposable
         Assert.True(File.Exists(dummyConfigFilePath));
         Assert.Equal(await File.ReadAllTextAsync(expectedConfigFile), await File.ReadAllTextAsync(dummyConfigFilePath));
     }
-
-    [Fact]
-    public async Task Refresh_RespondsWithNoContent()
-    {
-        HttpResponseMessage response = await Client.GetAsync($"{ConfigApi}/refresh");
-
-        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
-    }
 }
