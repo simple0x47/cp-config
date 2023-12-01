@@ -142,6 +142,8 @@ jobs:
           export PATH=$PATH:$PWD
           cd ../
           ./cd.sh
+        env:
+          SSH_CONNECTION: ${{ vars.SSH_CONNECTION }}
   clean:
     if: success() || failure()
     
