@@ -1,4 +1,5 @@
 using Core;
+using Cuplan.Config.Models;
 using Cuplan.Config.Services;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -28,7 +29,7 @@ public class GitDownloaderTest : TestBase, IDisposable
     [Fact]
     public void Download_ValidPath_Repository()
     {
-        Result<Empty, Error<string>> result = _downloader.Download(_downloadPath, false);
+        Result<DownloadResult, Error<string>> result = _downloader.Download(_downloadPath);
 
         AssertDownloadSuccess(result);
     }
@@ -36,14 +37,14 @@ public class GitDownloaderTest : TestBase, IDisposable
     [Fact]
     public void Download_AlreadyExistingPath_UpdatesRepository()
     {
-        _downloader.Download(_downloadPath, false);
+        _downloader.Download(_downloadPath);
 
-        Result<Empty, Error<string>> result = _downloader.Download(_downloadPath, false);
+        Result<DownloadResult, Error<string>> result = _downloader.Download(_downloadPath);
 
         AssertDownloadSuccess(result);
     }
 
-    private void AssertDownloadSuccess(Result<Empty, Error<string>> result)
+    private void AssertDownloadSuccess(Result<DownloadResult, Error<string>> result)
     {
         Assert.True(result.IsOk);
         Assert.True(Directory.Exists(_downloadPath));
