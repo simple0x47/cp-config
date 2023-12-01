@@ -11,6 +11,7 @@ public class ConfigProvider : IDisposable
     private readonly IDownloader _downloader;
     private readonly string _downloadPath;
     private readonly IPackager _packager;
+    private string? _lastPackageFilePath;
 
     public ConfigProvider(IDownloader downloader, IConfigBuilder configBuilder, IPackager packager,
         IConfiguration config)
@@ -38,9 +39,12 @@ public class ConfigProvider : IDisposable
     /// <returns>A byte array containing the package's bytes or an error.</returns>
     public Result<byte[], Error<string>> Generate(string component)
     {
-        Result<Empty, Error<string>> downloadResult = _downloader.Download(_downloadPath, false);
+        Result<DownloadResult, Error<string>> downloadResult = _downloader.Download(_downloadPath);
 
         if (!downloadResult.IsOk) return Result<byte[], Error<string>>.Err(downloadResult.UnwrapErr());
+
+        if (downloadResult.Unwrap() == DownloadResult.NoChanges && _lastPackageFilePath is not null)
+            return Result<byte[], Error<string>>.Ok(File.ReadAllBytes(_lastPackageFilePath));
 
         ReaderWriterLock readerWriterLock = _downloader.GetReaderWriterLock();
 
@@ -49,9 +53,11 @@ public class ConfigProvider : IDisposable
 
         try
         {
-            Result<Empty, Error<string>> configBuilderResult = _configBuilder.Build(_downloadPath, targetPath);
+            Result<Empty, Error<string>> configBuilderResult =
+                _configBuilder.Build(_downloadPath, targetPath);
 
-            if (!configBuilderResult.IsOk) return Result<byte[], Error<string>>.Err(configBuilderResult.UnwrapErr());
+            if (!configBuilderResult.IsOk)
+                return Result<byte[], Error<string>>.Err(configBuilderResult.UnwrapErr());
         }
         catch (Exception e)
         {
@@ -69,16 +75,11 @@ public class ConfigProvider : IDisposable
             return Result<byte[], Error<string>>.Err(new Error<string>(ErrorKind.NotFound,
                 $"component '{component}' could not be found"));
 
-        string packageFile = $"p-{Guid.NewGuid().ToString()}.{_packager.PackageExtension}";
-        Result<Empty, Error<string>> packagerResult = _packager.Package(componentPath, packageFile);
+        _lastPackageFilePath = $"p-{Guid.NewGuid().ToString()}.{_packager.PackageExtension}";
+        Result<Empty, Error<string>> packagerResult = _packager.Package(componentPath, _lastPackageFilePath);
 
         if (!packagerResult.IsOk) return Result<byte[], Error<string>>.Err(packagerResult.UnwrapErr());
 
-        return Result<byte[], Error<string>>.Ok(File.ReadAllBytes(packageFile));
-    }
-
-    public Result<Empty, Error<string>> Refresh()
-    {
-        return _downloader.Download(_downloadPath, true);
+        return Result<byte[], Error<string>>.Ok(File.ReadAllBytes(_lastPackageFilePath));
     }
 }

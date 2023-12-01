@@ -1,5 +1,6 @@
 using Core;
 using Core.Secrets;
+using Cuplan.Config.Models;
 using Cuplan.Config.Utils;
 using LibGit2Sharp;
 using LibGit2Sharp.Handlers;
@@ -72,55 +73,49 @@ public class GitDownloader : IDownloader
         }
     }
 
-    public Result<Empty, Error<string>> Download(string path, bool update)
-    {
-        try
-        {
-            // Update already existing repository or clone it if it doesn't exist
-            if (Directory.Exists(path) && Directory.Exists($"{path}/.git"))
-            {
-                if (!update) return Result<Empty, Error<string>>.Ok(new Empty());
-
-                Result<Empty, Error<string>> result = PullChanges(path);
-
-                if (!result.IsOk) return Result<Empty, Error<string>>.Err(result.UnwrapErr());
-            }
-            else
-            {
-                Result<Empty, Error<string>> result = CloneRepository(path);
-
-                if (!result.IsOk) return Result<Empty, Error<string>>.Err(result.UnwrapErr());
-            }
-
-            return Result<Empty, Error<string>>.Ok(new Empty());
-        }
-        catch (Exception e)
-        {
-            return Result<Empty, Error<string>>.Err(new Error<string>(ErrorKind.DownloadFailure,
-                $"failed to download configuration: {e.Message}"));
-        }
-    }
-
     public ReaderWriterLock GetReaderWriterLock()
     {
         return _lock;
     }
 
-    private Result<Empty, Error<string>> PullChanges(string path)
+    public Result<DownloadResult, Error<string>> Download(string path)
+    {
+        try
+        {
+            Result<DownloadResult, Error<string>> result;
+            // Update already existing repository or clone it if it doesn't exist
+            if (Directory.Exists(path) && Directory.Exists($"{path}/.git"))
+                result = PullChanges(path);
+            else
+                result = CloneRepository(path);
+
+            return result;
+        }
+        catch (Exception e)
+        {
+            return Result<DownloadResult, Error<string>>.Err(new Error<string>(ErrorKind.DownloadFailure,
+                $"failed to download configuration: {e.Message}"));
+        }
+    }
+
+    private Result<DownloadResult, Error<string>> PullChanges(string path)
     {
         _lock.AcquireWriterLock(_acquireWriterLockTimeout);
 
         try
         {
             using Repository repository = new(path);
-            Commands.Pull(repository, _merger, _pullOptions);
+            MergeResult result = Commands.Pull(repository, _merger, _pullOptions);
 
-            return Result<Empty, Error<string>>.Ok(new Empty());
+            if (result.Status != MergeStatus.UpToDate)
+                return Result<DownloadResult, Error<string>>.Ok(DownloadResult.Updated);
+
+            return Result<DownloadResult, Error<string>>.Ok(DownloadResult.NoChanges);
         }
         catch (Exception e)
         {
-            return Result<Empty, Error<string>>.Err(new Error<string>(ErrorKind.DownloadFailure,
-                $"pulling changes from repository has thrown an exception: {e.Message}"));
+            return Result<DownloadResult, Error<string>>.Err(new Error<string>(ErrorKind.DownloadFailure,
+                $"pulling changes from repository has thrown an exception '{e.GetType().Name}': {e.Message}: {e.StackTrace}"));
         }
         finally
         {
@@ -128,7 +123,7 @@ public class GitDownloader : IDownloader
         }
     }
 
-    private Result<Empty, Error<string>> CloneRepository(string path)
+    private Result<DownloadResult, Error<string>> CloneRepository(string path)
     {
         _lock.AcquireWriterLock(_acquireWriterLockTimeout);
 
@@ -138,11 +133,11 @@ public class GitDownloader : IDownloader
 
             _downloadedPaths.Add(path);
 
-            return Result<Empty, Error<string>>.Ok(new Empty());
+            return Result<DownloadResult, Error<string>>.Ok(DownloadResult.Created);
         }
         catch (Exception e)
         {
-            return Result<Empty, Error<string>>.Err(new Error<string>(ErrorKind.DownloadFailure,
+            return Result<DownloadResult, Error<string>>.Err(new Error<string>(ErrorKind.DownloadFailure,
                 $"cloning repository has thrown an exception '{e.GetType().Name}': {e.Message}: {e.StackTrace}"));
         }
         finally
