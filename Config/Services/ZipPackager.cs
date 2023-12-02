@@ -12,7 +12,7 @@ public class ZipPackager : IPackager
         _packageFiles = new List<string>();
     }
 
-    public string PackageExtension { get; } = "zip";
+    public string PackageExtension => "zip";
 
     public void Dispose()
     {
@@ -28,6 +28,8 @@ public class ZipPackager : IPackager
     {
         try
         {
+            if (File.Exists(targetFilePath)) File.Delete(targetFilePath);
+
             FastZip fastZip = new();
             fastZip.CreateZip(targetFilePath, sourcePath, true, null);
 

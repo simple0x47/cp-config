@@ -5,6 +5,8 @@ namespace Cuplan.Config.Models;
 
 public class ConfigProvider : IDisposable
 {
+    private const string ConfigBuildPath = "__config__build__";
+
     private readonly TimeSpan _acquireReaderLockTimeout;
     private readonly IConfiguration _config;
     private readonly IConfigBuilder _configBuilder;
@@ -42,15 +44,50 @@ public class ConfigProvider : IDisposable
 
         if (!downloadResult.IsOk) return Result<byte[], Error<string>>.Err(downloadResult.UnwrapErr());
 
+        string packageFilePath = $"package-{component}.{_packager.PackageExtension}";
+        string componentPath = $"{ConfigBuildPath}/{component}";
+
+        if (downloadResult.Unwrap() == DownloadResult.NoChanges)
+        {
+            if (!File.Exists(packageFilePath))
+            {
+                Result<Empty, Error<string>> result =
+                    PackageComponentPath(component, componentPath, packageFilePath);
+
+                if (!result.IsOk) return Result<byte[], Error<string>>.Err(result.UnwrapErr());
+            }
+
+            return Result<byte[], Error<string>>.Ok(File.ReadAllBytes(packageFilePath));
+        }
+
+        return DownloadBuildAndPackage(component, componentPath, packageFilePath);
+    }
+
+    private Result<Empty, Error<string>> PackageComponentPath(string component, string componentPath,
+        string packageFilePath)
+    {
+        if (!Directory.Exists(componentPath))
+            return Result<Empty, Error<string>>.Err(new Error<string>(ErrorKind.NotFound,
+                $"component '{component}' could not be found"));
+
+        Result<Empty, Error<string>> packagerResult = _packager.Package(componentPath, packageFilePath);
+
+        if (!packagerResult.IsOk) return Result<Empty, Error<string>>.Err(packagerResult.UnwrapErr());
+
+        return Result<Empty, Error<string>>.Ok(new Empty());
+    }
+
+    private Result<byte[], Error<string>> DownloadBuildAndPackage(string component, string componentPath,
+        string packageFilePath)
+    {
         ReaderWriterLock readerWriterLock = _downloader.GetReaderWriterLock();
 
         _downloader.GetReaderWriterLock().AcquireReaderLock(_acquireReaderLockTimeout);
-        string targetPath = $"t-{Guid.NewGuid().ToString()}";
 
         try
         {
             Result<Empty, Error<string>> configBuilderResult =
-                _configBuilder.Build(_downloadPath, targetPath);
+                _configBuilder.Build(_downloadPath, ConfigBuildPath);
 
             if (!configBuilderResult.IsOk)
                 return Result<byte[], Error<string>>.Err(configBuilderResult.UnwrapErr());
@@ -65,16 +102,9 @@ public class ConfigProvider : IDisposable
             readerWriterLock.ReleaseReaderLock();
         }
 
-        string componentPath = $"{targetPath}/{component}";
+        Result<Empty, Error<string>> packageResult = PackageComponentPath(component, componentPath, packageFilePath);
 
-        if (!Directory.Exists(componentPath))
-            return Result<byte[], Error<string>>.Err(new Error<string>(ErrorKind.NotFound,
-                $"component '{component}' could not be found"));
-
-        string packageFilePath = $"p-{Guid.NewGuid().ToString()}.{_packager.PackageExtension}";
-        Result<Empty, Error<string>> packagerResult = _packager.Package(componentPath, packageFilePath);
-
-        if (!packagerResult.IsOk) return Result<byte[], Error<string>>.Err(packagerResult.UnwrapErr());
+        if (!packageResult.IsOk) return Result<byte[], Error<string>>.Err(packageResult.UnwrapErr());
 
         return Result<byte[], Error<string>>.Ok(File.ReadAllBytes(packageFilePath));
     }

@@ -1,5 +1,6 @@
 using Core;
 using Cuplan.Config.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Cuplan.Config.Controllers;
@@ -18,6 +19,7 @@ public class ConfigController : ControllerBase
 
     [Route("api/[controller]/get/{microservice}")]
     [HttpGet]
+    [Authorize]
     public IActionResult GetConfig([FromRoute] string microservice)
     {
         Result<byte[], Error<string>> result = _configProvider.Generate(microservice);
