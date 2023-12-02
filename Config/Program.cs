@@ -1,8 +1,11 @@
 using System.Security.Claims;
 using Core.Secrets;
+using Cuplan.Config.HealthChecks;
 using Cuplan.Config.Models;
 using Cuplan.Config.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -32,11 +35,14 @@ builder.Services.AddSingleton<ISecretsManager, BitwardenSecretsManager>();
 
 // Services
 builder.Services.AddSingleton<IDownloader, GitDownloader>();
-builder.Services.AddScoped<IConfigBuilder, MicroconfigConfigBuilder>();
-builder.Services.AddScoped<IPackager, ZipPackager>();
+builder.Services.AddSingleton<IConfigBuilder, MicroconfigConfigBuilder>();
+builder.Services.AddSingleton<IPackager, ZipPackager>();
 
 // Models
-builder.Services.AddScoped<ConfigProvider>();
+builder.Services.AddSingleton<ConfigProvider>();
+
+// Health checks
+builder.Services.AddHealthChecks().AddCheck<DownloadHealthCheck>("download_check");
 
 WebApplication app = builder.Build();
 
@@ -52,6 +58,15 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResultStatusCodes =
+    {
+        [HealthStatus.Healthy] = StatusCodes.Status200OK,
+        [HealthStatus.Degraded] = StatusCodes.Status200OK,
+        [HealthStatus.Unhealthy] = StatusCodes.Status503ServiceUnavailable
+    }
+}).RequireAuthorization();
 
 app.Run();
 
