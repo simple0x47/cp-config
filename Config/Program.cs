@@ -42,7 +42,7 @@ builder.Services.AddSingleton<IPackager, ZipPackager>();
 builder.Services.AddSingleton<ConfigProvider>();
 
 // Health checks
-builder.Services.AddHealthChecks().AddCheck<DownloadHealthCheck>("download_check");
+builder.Services.AddHealthChecks().AddCheck<DownloadHealthCheck>("download_check", tags: new[] { "ready" });
 
 WebApplication app = builder.Build();
 
@@ -58,15 +58,20 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapHealthChecks("/health", new HealthCheckOptions
+app.MapHealthChecks("/healthz/ready", new HealthCheckOptions
 {
     ResultStatusCodes =
     {
         [HealthStatus.Healthy] = StatusCodes.Status200OK,
         [HealthStatus.Degraded] = StatusCodes.Status200OK,
         [HealthStatus.Unhealthy] = StatusCodes.Status503ServiceUnavailable
-    }
-}).RequireAuthorization();
+    },
+    Predicate = h => h.Tags.Contains("ready")
+});
+app.MapHealthChecks("/healthz/live", new HealthCheckOptions
+{
+    Predicate = _ => false
+});
 
 app.Run();
 
