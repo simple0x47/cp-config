@@ -5,17 +5,17 @@ namespace Cuplan.Config.Models;
 
 public class ConfigProvider : IDisposable
 {
-    private const string ConfigBuildPath = "__config__build__";
-
     private readonly TimeSpan _acquireReaderLockTimeout;
     private readonly IConfiguration _config;
     private readonly IConfigBuilder _configBuilder;
+    private readonly string _configBuildPath = $"{Directory.GetCurrentDirectory()}/__config__build__";
     private readonly IDownloader _downloader;
     private readonly string _downloadPath;
+    private readonly ILogger<ConfigProvider> _logger;
     private readonly IPackager _packager;
 
     public ConfigProvider(IDownloader downloader, IConfigBuilder configBuilder, IPackager packager,
-        IConfiguration config)
+        IConfiguration config, ILogger<ConfigProvider> logger)
     {
         _downloader = downloader;
         _configBuilder = configBuilder;
@@ -23,7 +23,8 @@ public class ConfigProvider : IDisposable
         _config = config;
         _acquireReaderLockTimeout =
             TimeSpan.FromSeconds(double.Parse(_config["ConfigProvider:AcquireReaderLockTimeout"]));
-        _downloadPath = _config.GetValue<string>("ConfigProvider:DownloadPath")!;
+        _downloadPath = $"{Directory.GetCurrentDirectory()}/{_config.GetValue<string>("ConfigProvider:DownloadPath")!}";
+        _logger = logger;
     }
 
     public void Dispose()
@@ -44,8 +45,8 @@ public class ConfigProvider : IDisposable
 
         if (!downloadResult.IsOk) return Result<byte[], Error<string>>.Err(downloadResult.UnwrapErr());
 
-        string packageFilePath = $"package-{component}.{_packager.PackageExtension}";
-        string componentPath = $"{ConfigBuildPath}/{component}";
+        string packageFilePath = $"{Directory.GetCurrentDirectory()}/package-{component}.{_packager.PackageExtension}";
+        string componentPath = $"{_configBuildPath}/{component}";
 
         if (downloadResult.Unwrap() == DownloadResult.NoChanges)
         {
@@ -67,8 +68,12 @@ public class ConfigProvider : IDisposable
         string packageFilePath)
     {
         if (!Directory.Exists(componentPath))
+        {
+            _logger.LogInformation(
+                $"Failed to find component having as current directory: {Directory.GetCurrentDirectory()}");
             return Result<Empty, Error<string>>.Err(new Error<string>(ErrorKind.NotFound,
-                $"component '{component}' could not be found"));
+                $"component '{component}' could not be found for path: {componentPath}"));
+        }
 
         Result<Empty, Error<string>> packagerResult = _packager.Package(componentPath, packageFilePath);
 
@@ -87,7 +92,7 @@ public class ConfigProvider : IDisposable
         try
         {
             Result<Empty, Error<string>> configBuilderResult =
-                _configBuilder.Build(_downloadPath, ConfigBuildPath);
+                _configBuilder.Build(_downloadPath, _configBuildPath);
 
             if (!configBuilderResult.IsOk)
                 return Result<byte[], Error<string>>.Err(configBuilderResult.UnwrapErr());
