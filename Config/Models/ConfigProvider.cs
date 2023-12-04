@@ -22,7 +22,7 @@ public class ConfigProvider : IDisposable
         _packager = packager;
         _config = config;
         _acquireReaderLockTimeout =
-            TimeSpan.FromSeconds(double.Parse(_config["ConfigProvider:AcquireReaderLockTimeout"]));
+            TimeSpan.FromSeconds(_config.GetValue<double>("ConfigProvider:AcquireReaderLockTimeout"));
         _downloadPath = $"{Directory.GetCurrentDirectory()}/{_config.GetValue<string>("ConfigProvider:DownloadPath")!}";
         _logger = logger;
     }
