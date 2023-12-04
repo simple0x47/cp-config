@@ -16,7 +16,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Cuplan.Core" Version="0.1.21"/>
+        <PackageReference Include="Cuplan.Core" Version="0.2.23"/>
     </ItemGroup>
 
     <ItemGroup>
