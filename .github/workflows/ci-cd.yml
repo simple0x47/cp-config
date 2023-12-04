@@ -11,7 +11,7 @@ env:
   DOTNET_FILE: "dotnet-sdk-8.0.100-linux-x64.tar.gz"
   ARTIFACT_NAME: "le_baguette"
   SECRETS_MANAGER_ACCESS_TOKEN: ${{ secrets.SECRETS_MANAGER_ACCESS_TOKEN }}
-  ASPNETCORE_ENVIRONMENT: "Development"
+  ASPNETCORE_ENVIRONMENT: "Staging"
   PATCH_VERSION: ${{ github.run_number }}
 
 jobs:
