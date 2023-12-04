@@ -25,8 +25,9 @@ public class ConfigProviderTest : TestBase, IDisposable
         hostEnvironment.EnvironmentName = EnvironmentName;
         IConfigBuilder configBuilder = new MicroconfigConfigBuilder(hostEnvironment, Config);
         IPackager packager = new ZipPackager();
+        Mock<ILogger<ConfigProvider>> configProviderLogger = new();
 
-        _configProvider = new ConfigProvider(downloader, configBuilder, packager, Config);
+        _configProvider = new ConfigProvider(downloader, configBuilder, packager, Config, configProviderLogger.Object);
     }
 
     public void Dispose()
